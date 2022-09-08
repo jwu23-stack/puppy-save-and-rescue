@@ -86,7 +86,7 @@ export const getPetById = ((async (event) => {
     }
 
     // Gets pets from owner id
-    const stmt = db.prepare("SELECT pets.* FROM pets INNER JOIN owners_pets ON owners_pets.pet_id = pets.id WHERE owners_pets.owner_id = :ownerid;");
+    const stmt = db.prepare("SELECT pets.name FROM pets INNER JOIN owners_pets ON owners_pets.pet_id = pets.id WHERE owners_pets.owner_id = :ownerid;");
 
     // Bind values to the parameters and fetch the results of the query
     const result = stmt.getAsObject({':ownerid' : ownerId});
