@@ -75,15 +75,22 @@ export const getPets = ((async (event) => {
  * Get pets API by ID. Route: /api/pets/{id}
  *
  **/
+ // Fix: API returns the wrong pet when looking for the owner id
 export const getPetById = ((async (event) => {
     // Initialize the DB
     let db = await init();
 
-    // Prepare an sql statement
-    const stmt = db.prepare("SELECT * FROM pets WHERE id=:id ");
+    let ownerId : Number = 0;
+    if (event.pathParameters != undefined) {
+        ownerId = Number(event.pathParameters.id);
+    }
+
+    // Gets pets from owner id
+    const stmt = db.prepare("SELECT pets.* FROM pets INNER JOIN owners_pets ON owners_pets.pet_id = pets.id WHERE owners_pets.owner_id = :ownerid;");
 
     // Bind values to the parameters and fetch the results of the query
-    const result = stmt.getAsObject({':id' : 1});
+    const result = stmt.getAsObject({':ownerid' : ownerId});
+    stmt.free();
 
     return { statusCode: 200, body: JSON.stringify(result) }
 }))
@@ -131,8 +138,11 @@ export const getLostPets = ((async (event) => {
     // Initialize the DB
     let db = await init();
 
-    // TODO: Finish implementation here
+    // Use left join to return all rows from pets table and filter out the results to remove no records in owners.pets that exist from the particular id in the pets table
+    let lostPetsQuery = db.exec("SELECT pets.* FROM pets LEFT JOIN owners_pets ON owners_pets.pet_id = pets.id WHERE owners_pets.pet_id IS NULL");
 
-    return { statusCode: 200 }
+    // Make the results a readable format
+    const prettyRestults = serialize(lostPetsQuery);
+
+    return { statusCode: 200, body: JSON.stringify(prettyRestults) }
 }))
-
